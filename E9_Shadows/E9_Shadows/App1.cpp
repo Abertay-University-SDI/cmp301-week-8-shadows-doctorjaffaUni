@@ -38,26 +38,22 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	// Configure directional light
-	light = new Light();
-	light->setAmbientColour(0.7f, 0.3f, 0.3f, 1.0f);
-	light->setDiffuseColour(1.0f, .0f, .0f, 1.0f);
-	light->setDirection(0.0f, -0.7f, -.7f);
-	light->setPosition(-25.f, 0.f, -10.f);
-	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+	lights[0] = new Light();
+	lights[0]->setAmbientColour(0.7f, 0.3f, 0.3f, 1.0f);
+	lights[0]->setDiffuseColour(1.0f, .0f, .0f, 1.0f);
+	lights[0]->setDirection(0.0f, -0.7f, -.7f);
+	lights[0]->setPosition(-25.f, 0.f, -10.f);
+	lights[0]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
 	lightPos[0] = -10.0f; lightPos[1] = 10.f; lightPos[2] = 0.0f;
 	lightDir[0] = 0.7f; lightDir[1] = -0.7f; lightDir[2] = 0.0f; // Set default light direction
 
-	lights[0] = light;
-
-	light2 = new Light();
-	light2->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
-	light2->setDiffuseColour(.0f, .0f, 1.0f, 1.0f);
-	light2->setDirection(-0.7f, -0.7f, 0.0f);
-	light2->setPosition(10.0f, 10.f, 0.f);
-	light2->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
-
-	lights[1] = light2;
+	lights[1] = new Light();
+	lights[1]->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
+	lights[1]->setDiffuseColour(.0f, .0f, 1.0f, 1.0f);
+	lights[1]->setDirection(-0.7f, -0.7f, 0.0f);
+	lights[1]->setPosition(10.0f, 10.f, 0.f);
+	lights[1]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 }
 
 App1::~App1()
@@ -93,11 +89,6 @@ bool App1::frame()
 bool App1::render()
 {
 
-	light->setPosition(lightPos[0], lightPos[1], lightPos[2]);
-	// Since all direction values can't be 0, lock one to 0.1f if this would be the case
-	if (lightDir[0] == .0f && lightDir[1] == .0f && lightDir[2] == .0f) lightDir[1] = 0.1f;
-	light->setDirection(lightDir[0], lightDir[1], lightDir[2]);
-
 	// Perform depth pass
 	depthPass();
 	// Render scene
@@ -111,10 +102,15 @@ void App1::depthPass()
 	// Set the render target to be the render to texture.
 	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
+	lights[0]->setPosition(lightPos[0], lightPos[1], lightPos[2]);
+	// Since all direction values can't be 0, lock one to 0.1f if this would be the case
+	if (lightDir[0] == .0f && lightDir[1] == .0f && lightDir[2] == .0f) lightDir[1] = 0.1f;
+	lights[0]->setDirection(lightDir[0], lightDir[1], lightDir[2]);
+
 	// get the world, view, and projection matrices from the camera and d3d objects.
-	light->generateViewMatrix();
-	XMMATRIX lightViewMatrix = light->getViewMatrix();
-	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
+	lights[0]->generateViewMatrix();
+	XMMATRIX lightViewMatrix = lights[0]->getViewMatrix();
+	XMMATRIX lightProjectionMatrix = lights[0]->getOrthoMatrix();
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
