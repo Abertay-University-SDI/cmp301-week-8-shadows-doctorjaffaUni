@@ -27,6 +27,8 @@ protected:
 private:
 	TextureShader* textureShader;
 	PlaneMesh* mesh;
+	OrthoMesh* shadowDataMesh0;
+	OrthoMesh* shadowDataMesh1;
 
 	SphereMesh* lightMesh0;
 	SphereMesh* lightMesh1;

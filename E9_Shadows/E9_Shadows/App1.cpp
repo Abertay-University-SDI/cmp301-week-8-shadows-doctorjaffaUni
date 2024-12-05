@@ -21,6 +21,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	lightMesh0 = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	lightMesh1 = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
+	shadowDataMesh0 = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth / 2, screenHeight / 2, -screenWidth / 2, screenHeight / 2);
+	shadowDataMesh1 = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth / 2, screenHeight / 2, -screenWidth / 2, screenHeight / 2);
+
 	// initial shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
 	depthShader = new DepthShader(renderer->getDevice(), hwnd);
@@ -35,9 +38,6 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// This is your shadow map
 	shadowMaps[0] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 	shadowMaps[1] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
-
-	depthMaps[0] = shadowMaps[0]->getDepthMapSRV();
-	depthMaps[1] = shadowMaps[1]->getDepthMapSRV();
 
 	// Configure directional light
 	lights[0] = new Light();
@@ -129,8 +129,8 @@ void App1::depthPass()
 	depthShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	//// Set back buffer as render target and reset view port.
-	//renderer->setBackBufferRenderTarget();
-	//renderer->resetViewport();
+	renderer->setBackBufferRenderTarget();
+	renderer->resetViewport();
 
 	// ---------- Shadow Map 1 ---------- //
 
@@ -180,6 +180,9 @@ void App1::finalPass()
 	lights[1]->setPosition(light1Pos[0], light1Pos[1], light1Pos[2]);
 	lights[1]->setDirection(light1Dir[0], light1Dir[1], light1Dir[2]);
 
+	depthMaps[0] = shadowMaps[0]->getDepthMapSRV();
+	depthMaps[1] = shadowMaps[1]->getDepthMapSRV();
+
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 	// Render floor
 	mesh->sendData(renderer->getDeviceContext());
@@ -206,6 +209,22 @@ void App1::finalPass()
 	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix * XMMatrixTranslation(lights[1]->getPosition().x, lights[1]->getPosition().y, lights[1]->getPosition().z), viewMatrix, projectionMatrix, textureMgr->getTexture(L""));
 	textureShader->render(renderer->getDeviceContext(), lightMesh1->getIndexCount());
 
+	// RENDER THE TEXTURE SCENE
+	renderer->setZBuffer(false);
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
+	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
+	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
+	shadowDataMesh0->sendData(renderer->getDeviceContext());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, depthMaps[0]);
+	textureShader->render(renderer->getDeviceContext(), shadowDataMesh0->getIndexCount());
+
+	shadowDataMesh1->sendData(renderer->getDeviceContext());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix * XMMatrixTranslation(500, 0, 0), orthoViewMatrix, orthoMatrix, depthMaps[1]);
+	textureShader->render(renderer->getDeviceContext(), shadowDataMesh1->getIndexCount());
+	renderer->setZBuffer(true);
 	gui();
 	renderer->endScene();
 }

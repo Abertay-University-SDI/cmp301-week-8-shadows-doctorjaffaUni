@@ -104,8 +104,10 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
+
 	XMMATRIX tLightViewMatrix0 = XMMatrixTranspose(lights[0]->getViewMatrix());
 	XMMATRIX tLightProjectionMatrix0 = XMMatrixTranspose(lights[0]->getOrthoMatrix());
+	
 	XMMATRIX tLightViewMatrix1 = XMMatrixTranspose(lights[1]->getViewMatrix());
 	XMMATRIX tLightProjectionMatrix1 = XMMatrixTranspose(lights[1]->getOrthoMatrix());
 	
@@ -117,6 +119,8 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	dataPtr->projection = tproj;
 	dataPtr->lightView[0] = tLightViewMatrix0;
 	dataPtr->lightProjection[0] = tLightProjectionMatrix0;
+	dataPtr->lightView[1] = tLightViewMatrix1;
+	dataPtr->lightProjection[1] = tLightProjectionMatrix1;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -126,13 +130,13 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	lightPtr = (LightBufferType*)mappedResource.pData;
 	lightPtr->ambient[0] = lights[0]->getAmbientColour();
 	lightPtr->diffuse[0] = lights[0]->getDiffuseColour();
-	lightPtr->direction[0] = lights[0]->getDirection();
+	lightPtr->direction[0] = XMFLOAT4(lights[0]->getDirection().x, lights[0]->getDirection().y, lights[0]->getDirection().z, 0.0f);
+	lightPtr->position[0] = XMFLOAT4(lights[0]->getPosition().x, lights[0]->getPosition().y, lights[0]->getPosition().z, 0.0f);
 
 	lightPtr->ambient[1] = lights[1]->getAmbientColour();
 	lightPtr->diffuse[1] = lights[1]->getDiffuseColour();
-	lightPtr->direction[1] = lights[1]->getDirection();
-
-	lightPtr->padding = XMFLOAT2(0.f, 0.f);
+	lightPtr->direction[1] = XMFLOAT4(lights[1]->getDirection().x, lights[1]->getDirection().y, lights[1]->getDirection().z, 0.0f);
+	lightPtr->position[1] = XMFLOAT4(lights[1]->getPosition().x, lights[1]->getPosition().y, lights[1]->getPosition().z, 0.0f);
 
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
