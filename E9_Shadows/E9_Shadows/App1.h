@@ -28,12 +28,24 @@ private:
 	TextureShader* textureShader;
 	PlaneMesh* mesh;
 
-	Light* light;
+	SphereMesh* lightMesh0;
+	SphereMesh* lightMesh1;
+
+	Light* lights[2];
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 
-	ShadowMap* shadowMap;
+	ShadowMap* shadowMaps[2];
+
+	ID3D11ShaderResourceView* depthMaps[2];
+
+	// Light Variables
+	float light0Dir[3];
+	float light1Dir[3];
+
+	float light0Pos[3];
+	float light1Pos[3];
 };
 
 #endif
